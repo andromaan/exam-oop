@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Implementation;
 
-public class PayrollManager(IServiceProvider serviceProvider)
+public class PayrollManager(IServiceProvider serviceProvider, TransactionNotifier notifier)
 {
     private async Task<T> ExecuteInScopeEmployeeAsync<T>(Func<IEmployeeRepository, Task<T>> operation)
     {
@@ -58,6 +58,8 @@ public class PayrollManager(IServiceProvider serviceProvider)
 
             var transaction = new Transaction(new Guid(), employee.Id, request.Amount, request.Type);
             
+            await notifier.NotifyAsync(transaction, "add");
+            
             return await repo.Add(transaction);
         });
 
@@ -82,5 +84,19 @@ public class PayrollManager(IServiceProvider serviceProvider)
                 .SelectMany(e => e.Transactions)
                 .Where(t => t.Date >= startDate && t.Date <= endDate)
                 .Sum(t => t.Amount);
+        });
+    
+    public Task<Transaction> DeleteTransactionAsync(Guid transactionId) =>
+        ExecuteInScopeTransactionAsync(async repo =>
+        {
+            var transaction = await repo.Get(transactionId);
+            if (transaction == null)
+                throw new InvalidOperationException($"Transaction with ID {transactionId} not found.");
+
+            var deletedTransaction = await repo.Delete(transactionId);
+
+            await notifier.NotifyAsync(transaction, "delete");
+
+            return deletedTransaction;
         });
 }

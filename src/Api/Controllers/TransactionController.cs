@@ -28,4 +28,21 @@ public class TransactionController(PayrollManager payrollManager, ITransactionQu
 
         return Ok(transactions.Select(TransactionDTO.FromDomainModel).ToList());
     }
+    
+    [HttpGet("get-all")]
+    public async Task<ActionResult<TransactionVM>> GetAll()
+    {
+        var transactions = await transactionQueries.GetAll();
+
+        return Ok(transactions.Select(TransactionDTO.FromDomainModel).ToList());
+    }
+    
+    [HttpDelete("delete/{transactionId:guid}")]
+    public async Task<ActionResult<TransactionVM>> GetAll(
+        [FromRoute] Guid transactionId)
+    {
+        var response = await payrollManager.DeleteTransactionAsync(transactionId);
+
+        return Ok(response);
+    }
 }

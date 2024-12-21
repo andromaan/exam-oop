@@ -1,7 +1,7 @@
-using Application.Abstraction.Interfaces;
 using Application.Abstraction.Interfaces.Queries;
 using Application.Abstraction.Interfaces.Repositories;
 using Application.Implementation;
+using Application.Implementation.Observers;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -28,9 +28,39 @@ public static class ConfigurePersistence
                 .ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning)));
 
         services.AddScoped<ApplicationDbContextInitialiser>();
+        services.AddObservers();
         services.AddRepositories();
+        services.AddSingletons();
+    }
 
-        services.AddSingleton<PayrollManager>();
+    private static void AddObservers(this IServiceCollection services)
+    {
+        services.AddTransient<TransactionReportGenerator>();
+        services.AddTransient<TransactionLogger>();
+        services.AddTransient<TransactionUIUpdater>();
+    }
+
+    private static void AddSingletons(this IServiceCollection services)
+    {
+        services.AddSingleton<PayrollManager>(provider =>
+        {
+            var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
+            var notifier = provider.GetRequiredService<TransactionNotifier>();
+
+            var payrollManager = new PayrollManager(provider, notifier);
+
+            using var scope = scopeFactory.CreateScope();
+            var scopedProvider = scope.ServiceProvider;
+
+            notifier.Subscribe(scopedProvider.GetRequiredService<TransactionLogger>());
+            notifier.Subscribe(scopedProvider.GetRequiredService<TransactionUIUpdater>());
+            notifier.Subscribe(scopedProvider.GetRequiredService<TransactionReportGenerator>());
+
+            return payrollManager;
+        });
+
+        
+        services.AddSingleton<TransactionNotifier>();
     }
 
     private static void AddRepositories(this IServiceCollection services)

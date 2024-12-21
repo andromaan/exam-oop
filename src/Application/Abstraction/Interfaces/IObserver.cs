@@ -1,6 +1,8 @@
-﻿namespace Application.Abstraction.Interfaces;
+﻿using Domain.Models;
+
+namespace Application.Abstraction.Interfaces;
 
 public interface IObserver
 {
-    void Update(string message);
+    Task UpdateAsync(Transaction transaction, string action);
 }
