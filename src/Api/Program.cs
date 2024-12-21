@@ -1,3 +1,4 @@
+using Application.Extensions;
 using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+
+app.SeedData();
 
 app.Run();
 

@@ -2,11 +2,11 @@
 
 namespace Application.Abstraction.ViewModels;
 
-public record TransactionVM(Guid Id, Guid EmployeeId, decimal Amount, DateTime Date, string Type)
+public record TransactionVM
 {
-    public TransactionVM FromDomainModel(Transaction transaction)
-        => new(transaction.Id, transaction.EmployeeId, transaction.Amount, transaction.Date, transaction.Type);
-
-    public Transaction ToDomainModel()
-        => new(Id, EmployeeId, Amount, Type);
+    public Guid Id { get; set; }
+    public Guid EmployeeId { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime Date { get; set; }
+    public string Type { get; set; }
 }

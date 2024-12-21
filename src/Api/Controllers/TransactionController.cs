@@ -24,7 +24,7 @@ public class TransactionController(PayrollManager payrollManager, ITransactionQu
     public async Task<ActionResult<TransactionVM>> GetAllByEmployee(
         [FromRoute] Guid employeeId)
     {
-        var transactions = await transactionQueries.GetAllForEmployee(employeeId);
+        var transactions = await payrollManager.GetTransactionsByEmployeeAsync(employeeId);
 
         return Ok(transactions.Select(TransactionDTO.FromDomainModel).ToList());
     }
@@ -35,6 +35,15 @@ public class TransactionController(PayrollManager payrollManager, ITransactionQu
         var transactions = await transactionQueries.GetAll();
 
         return Ok(transactions.Select(TransactionDTO.FromDomainModel).ToList());
+    }
+    
+    [HttpGet("get-get-total-amount-by-period")]
+    public async Task<ActionResult<decimal>> GetTotalAmountByPeriod(
+        DateTime from, DateTime to)
+    {
+        var amount = await payrollManager.GetTotalPayoutsAsync(from, to);
+
+        return Ok(amount);
     }
     
     [HttpDelete("delete/{transactionId:guid}")]

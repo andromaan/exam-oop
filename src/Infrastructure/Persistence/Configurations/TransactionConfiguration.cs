@@ -22,9 +22,14 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasConversion(new DateTimeUtcConverter())
             .HasDefaultValueSql("timezone('utc', now())");
 
-        builder.Property(x => x.Type)
+        builder.Property(x => x.TypeId)
             .IsRequired()
             .HasMaxLength(50);
+        
+        builder.HasOne(m => m.Type)
+            .WithMany()
+            .HasForeignKey(m => m.TypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
 }

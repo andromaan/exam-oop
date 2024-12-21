@@ -7,7 +7,7 @@ public class TransactionUIUpdater : IObserver
 {
     public Task UpdateAsync(Transaction transaction, string action)
     {
-        Console.WriteLine($"UI updated: Transaction {action} for {transaction.Type}.");
+        Console.WriteLine($"UI updated: Transaction {action} for {transaction.TypeId}.");
         return Task.CompletedTask;
     }
 }

@@ -27,7 +27,7 @@ public class TransactionReportGenerator(ITransactionQueries transactionQueries) 
     private void GenerateReport()
     {
         var report = string.Join(Environment.NewLine, _transactions.Select(t =>
-            $"{t.Date:yyyy-MM-dd}: {t.Type} - {t.Amount} USD"));
+            $"{t.Date:yyyy-MM-dd}: {t.TypeId} - {t.Amount} USD"));
 
         File.WriteAllText("TransactionReport.txt", report);
         Console.WriteLine("Transaction report updated.");

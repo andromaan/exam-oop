@@ -7,14 +7,15 @@ public class Transaction
     public Employee? Employee { get; set; }
     public decimal Amount { get; set; }
     public DateTime Date { get; set; }
-    public string Type { get; set; }
+    public TypeForTransaction Type { get; set; }
+    public string TypeId { get; set; }
 
-    public Transaction(Guid id, Guid employeeId, decimal amount, string type)
+    public Transaction(Guid id, Guid employeeId, decimal amount, string typeId)
     {
         Id = id;
         EmployeeId = employeeId;
         Amount = amount;
         Date = DateTime.Now;
-        Type = type;
+        TypeId = typeId;
     }
 }

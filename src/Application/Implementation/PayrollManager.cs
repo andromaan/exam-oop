@@ -63,25 +63,26 @@ public class PayrollManager(IServiceProvider serviceProvider, TransactionNotifie
             return await repo.Add(transaction);
         });
 
-    public Task<List<Transaction>> GetTransactionsByEmployeeAsync(Guid employeeId) =>
-        ExecuteInScopeEmployeeAsync(async repo =>
+    public Task<IReadOnlyList<Transaction>> GetTransactionsByEmployeeAsync(Guid employeeId) =>
+        ExecuteInScopeTransactionAsync(async repo =>
         {
-            var employee = await repo.Get(employeeId);
+            var employee = await ExecuteInScopeEmployeeAsync( repository 
+                => repository.Get(employeeId));
+            
             if (employee == null)
             {
                 throw new InvalidOperationException($"Employee with {employeeId} not found.");
             }
 
-            return employee.Transactions;
+            return await repo.GetAllForEmployee(employeeId);
         });
 
     public Task<decimal> GetTotalPayoutsAsync(DateTime startDate, DateTime endDate) =>
-        ExecuteInScopeEmployeeAsync(async repo =>
+        ExecuteInScopeTransactionAsync(async repo =>
         {
-            var employees = await repo.GetAll();
+            var transactions = await repo.GetAll();
 
-            return employees
-                .SelectMany(e => e.Transactions)
+            return transactions
                 .Where(t => t.Date >= startDate && t.Date <= endDate)
                 .Sum(t => t.Amount);
         });
