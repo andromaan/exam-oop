@@ -22,4 +22,7 @@ app.MapControllers();
 
 app.Run();
 
-public partial class Program;
+namespace Api
+{
+    public partial class Program;
+}

@@ -1,3 +1,8 @@
+using Application.Abstraction.Interfaces;
+using Application.Abstraction.Interfaces.Queries;
+using Application.Abstraction.Interfaces.Repositories;
+using Application.Implementation;
+using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -24,10 +29,18 @@ public static class ConfigurePersistence
 
         services.AddScoped<ApplicationDbContextInitialiser>();
         services.AddRepositories();
+
+        services.AddSingleton<PayrollManager>();
     }
 
     private static void AddRepositories(this IServiceCollection services)
     {
+        services.AddScoped<EmployeeRepository>();
+        services.AddScoped<IEmployeeRepository>(provider => provider.GetRequiredService<EmployeeRepository>());
+        services.AddScoped<IEmployeeQueries>(provider => provider.GetRequiredService<EmployeeRepository>());
         
+        services.AddScoped<TransactionRepository>();
+        services.AddScoped<ITransactionRepository>(provider => provider.GetRequiredService<TransactionRepository>());
+        services.AddScoped<ITransactionQueries>(provider => provider.GetRequiredService<TransactionRepository>());
     }
 }

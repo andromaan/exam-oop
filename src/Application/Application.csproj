@@ -18,9 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Abstraction\" />
       <Folder Include="Extensions\" />
-      <Folder Include="Implementation\" />
     </ItemGroup>
 
 </Project>
