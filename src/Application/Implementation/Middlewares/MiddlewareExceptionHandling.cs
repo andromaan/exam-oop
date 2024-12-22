@@ -1,0 +1,49 @@
+﻿using System.Net;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Application.Abstraction.Interfaces;
+
+namespace Application.Implementation.Middlewares;
+
+public class MiddlewareExceptionHandling(RequestDelegate next, ILogger logger)
+{
+
+    public async Task Invoke(HttpContext context)
+    {
+        try
+        {
+            await next(context);
+        }
+        catch (Exception ex)
+        {
+            await HandleExceptionAsync(context, ex);
+        }
+    }
+
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        logger.LogError(exception, "An unexpected error occurred");
+
+        var response = context.Response;
+        response.ContentType = "application/json";
+
+        var statusCode = exception switch
+        {
+            FileNotFoundException => (int)HttpStatusCode.NotFound,
+            UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+            InvalidOperationException => (int)HttpStatusCode.BadRequest,
+            _ => (int)HttpStatusCode.InternalServerError
+        };
+
+        response.StatusCode = statusCode;
+
+        var errorResponse = new
+        {
+            StatusCode = statusCode,
+            Message = exception.Message,
+            Details = exception.InnerException?.Message
+        };
+
+        await response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+    }
+}

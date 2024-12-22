@@ -8,4 +8,11 @@ public class ConsoleLogger : ILogger
     {
         Console.WriteLine($"[Console Logger] {message}");
     }
+
+    public void LogError(Exception exception, string message)
+    {
+        Console.WriteLine($"[Console Logger] ERROR: {message}");
+        Console.WriteLine($"Exception: {exception.GetType().Name} - {exception.Message}");
+        Console.WriteLine($"StackTrace: {exception.StackTrace}");
+    }
 }

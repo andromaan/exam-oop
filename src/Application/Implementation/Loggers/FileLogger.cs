@@ -24,4 +24,14 @@ public class FileLogger : ILogger
             writer.WriteLine($"[File Logger] {DateTime.Now}: {message}");
         }
     }
+
+    public void LogError(Exception exception, string message)
+    {
+        using (var writer = new StreamWriter(_filePath, append: true))
+        {
+            writer.WriteLine($"[File Logger] {DateTime.Now}: ERROR - {message}");
+            writer.WriteLine($"Exception: {exception.GetType().Name} - {exception.Message}");
+            writer.WriteLine($"StackTrace: {exception.StackTrace}");
+        }
+    }
 }
