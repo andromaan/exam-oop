@@ -1,7 +1,10 @@
 ﻿using Api.DTOs;
 using Application.Abstraction.Interfaces.Queries;
+using Application.Abstraction.Validatiors;
 using Application.Abstraction.ViewModels;
 using Application.Implementation;
+using Application.Implementation.PayrollManager;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -12,16 +15,24 @@ public class TransactionsController(PayrollManager payrollManager, ITransactionQ
     : ControllerBase
 {
     [HttpPost("add")]
-    public async Task<ActionResult<TransactionVM>> Add(
+    public async Task<ActionResult<TransactionDTO>> Add(
         [FromBody] TransactionVM request)
     {
+        var validator = new TransactionValidator();
+        var validation = await validator.ValidateAsync(request);
+        
+        if (!validation.IsValid)
+        {
+            throw new ValidationException(validation.Errors[0].ErrorMessage);
+        }
+        
         var response = await payrollManager.CreateTransactionAsync(request);
 
         return Ok(TransactionDTO.FromDomainModel(response));
     }
 
     [HttpGet("get-all-by-employee/{employeeId:guid}")]
-    public async Task<ActionResult<TransactionVM>> GetAllByEmployee(
+    public async Task<ActionResult<TransactionDTO>> GetAllByEmployee(
         [FromRoute] Guid employeeId)
     {
         var transactions = await payrollManager.GetTransactionsByEmployeeAsync(employeeId);
@@ -30,7 +41,7 @@ public class TransactionsController(PayrollManager payrollManager, ITransactionQ
     }
     
     [HttpGet("get-all")]
-    public async Task<ActionResult<TransactionVM>> GetAll()
+    public async Task<ActionResult<TransactionDTO>> GetAll()
     {
         var transactions = await transactionQueries.GetAll();
 
@@ -47,7 +58,7 @@ public class TransactionsController(PayrollManager payrollManager, ITransactionQ
     }
     
     [HttpDelete("delete/{transactionId:guid}")]
-    public async Task<ActionResult<TransactionVM>> GetAll(
+    public async Task<ActionResult<TransactionDTO>> GetAll(
         [FromRoute] Guid transactionId)
     {
         var response = await payrollManager.DeleteTransactionAsync(transactionId);

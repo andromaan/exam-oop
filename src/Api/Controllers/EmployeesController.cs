@@ -1,7 +1,9 @@
 ﻿using Api.DTOs;
 using Application.Abstraction.Interfaces.Queries;
+using Application.Abstraction.Validatiors;
 using Application.Abstraction.ViewModels;
-using Application.Implementation;
+using Application.Implementation.PayrollManager;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -14,6 +16,14 @@ public class EmployeesController(PayrollManager payrollManager, IEmployeeQueries
     public async Task<ActionResult<EmployeeDTO>> Add(
         [FromBody] EmployeeVM request)
     {
+        var validator = new EmployeeValidator();
+        var validation = await validator.ValidateAsync(request);
+        
+        if (!validation.IsValid)
+        {
+            throw new ValidationException(validation.Errors[0].ErrorMessage);
+        }
+        
         var respond = await payrollManager.AddEmployeeAsync(request);
 
         return Ok(EmployeeDTO.FromDomainModel(respond));

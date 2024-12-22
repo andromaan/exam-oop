@@ -6,7 +6,7 @@ using Domain.Constants;
 using Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Application.Implementation;
+namespace Application.Implementation.PayrollManager;
 
 public class PayrollManager
 {

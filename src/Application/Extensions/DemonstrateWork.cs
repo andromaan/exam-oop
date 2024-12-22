@@ -1,7 +1,6 @@
 ﻿using Application.Abstraction.Interfaces.Queries;
-using Application.Abstraction.Interfaces.Repositories;
 using Application.Abstraction.ViewModels;
-using Application.Implementation;
+using Application.Implementation.PayrollManager;
 using Domain.Constants;
 using Domain.Models;
 using Microsoft.AspNetCore.Builder;

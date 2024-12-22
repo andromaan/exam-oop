@@ -1,4 +1,4 @@
-﻿namespace Application.Implementation;
+﻿namespace Application.Implementation.PayrollManager;
 
 public class PayrollManagerExceptions(string message, Exception? innerException = null)
     : Exception(message, innerException)

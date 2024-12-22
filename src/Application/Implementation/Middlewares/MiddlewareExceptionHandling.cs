@@ -1,7 +1,9 @@
 ﻿using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Http;
 using Application.Abstraction.Interfaces;
+using Application.Implementation.PayrollManager;
+using FluentValidation;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Implementation.Middlewares;
 
@@ -34,6 +36,7 @@ public class MiddlewareExceptionHandling(RequestDelegate next, ILogger logger)
             UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
             InvalidOperationException 
                 or DatePeriodInvalidException
+                or ValidationException
                 or ArgumentException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError
         };

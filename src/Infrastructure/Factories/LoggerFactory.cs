@@ -2,7 +2,7 @@
 using Application.Implementation.Loggers;
 using Microsoft.Extensions.Configuration;
 
-namespace Infrastructure.Factiories;
+namespace Infrastructure.Factories;
 
 public static class LoggerFactory
 {
