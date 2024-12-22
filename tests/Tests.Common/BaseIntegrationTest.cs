@@ -22,16 +22,7 @@ public abstract class BaseIntegrationTest : IClassFixture<IntegrationTestWebFact
         var scope = factory.Services.CreateScope();
 
         Context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Client = factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddAuthentication(defaultScheme: "TestScheme")
-                        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-                            "TestScheme", _ => { });
-                });
-            })
-            .CreateClient(new WebApplicationFactoryClientOptions
+        Client = factory.CreateClient(new WebApplicationFactoryClientOptions
             {
                 AllowAutoRedirect = false,
             });
@@ -46,24 +37,5 @@ public abstract class BaseIntegrationTest : IClassFixture<IntegrationTestWebFact
         Context.ChangeTracker.Clear();
 
         return result;
-    }
-}
-
-public class TestAuthHandler(
-    IOptionsMonitor<AuthenticationSchemeOptions> options,
-    ILoggerFactory logger,
-    UrlEncoder encoder)
-    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
-{
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
-    {
-        var claims = new[] { new Claim(ClaimTypes.Role, "admin"), new Claim("userId", "admin") };
-        var identity = new ClaimsIdentity(claims, "Test");
-        var principal = new ClaimsPrincipal(identity);
-        var ticket = new AuthenticationTicket(principal, "TestScheme");
-
-        var result = AuthenticateResult.Success(ticket);
-
-        return Task.FromResult(result);
     }
 }

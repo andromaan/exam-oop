@@ -32,9 +32,8 @@ public static class ConfigurePersistence
         services.AddScoped<ApplicationDbContextInitialiser>();
         services.AddObservers();
         services.AddRepositories();
-        services.AddSingletons();
+        services.AddSingletons(configuration);
 
-        services.AddSingleton<ILogger>(provider => LoggerFactory.CreateLogger(configuration));
     }
 
     private static void AddObservers(this IServiceCollection services)
@@ -44,28 +43,11 @@ public static class ConfigurePersistence
         services.AddTransient<TransactionUIUpdater>();
     }
 
-    private static void AddSingletons(this IServiceCollection services)
+    private static void AddSingletons(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<PayrollManager>(provider =>
-        {
-            var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-            var notifier = provider.GetRequiredService<TransactionNotifier>();
-            var logger = provider.GetRequiredService<ILogger>();
-
-            var payrollManager = new PayrollManager(provider, notifier,logger);
-
-            using var scope = scopeFactory.CreateScope();
-            var scopedProvider = scope.ServiceProvider;
-
-            notifier.Subscribe(scopedProvider.GetRequiredService<TransactionLogger>());
-            notifier.Subscribe(scopedProvider.GetRequiredService<TransactionUIUpdater>());
-            notifier.Subscribe(scopedProvider.GetRequiredService<TransactionReportGenerator>());
-
-            return payrollManager;
-        });
-
-
+        services.AddSingleton<PayrollManager>();
         services.AddSingleton<TransactionNotifier>();
+        services.AddSingleton<ILogger>(_ => LoggerFactory.CreateLogger(configuration));
     }
 
     private static void AddRepositories(this IServiceCollection services)

@@ -1,17 +1,33 @@
 ﻿using Application.Abstraction.Interfaces;
 using Application.Abstraction.Interfaces.Repositories;
 using Application.Abstraction.ViewModels;
+using Application.Implementation.Observers;
 using Domain.Constants;
 using Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Implementation;
 
-public class PayrollManager(
-    IServiceProvider serviceProvider,
-    TransactionNotifier notifier,
-    ILogger logger)
+public class PayrollManager
 {
+    private readonly IServiceProvider serviceProvider;
+    private readonly TransactionNotifier notifier;
+    private readonly ILogger logger;
+
+    public PayrollManager(IServiceProvider serviceProvider, TransactionNotifier notifier, ILogger logger)
+    {
+        this.serviceProvider = serviceProvider;
+        this.notifier = notifier;
+        this.logger = logger;
+        
+        using var scope = serviceProvider.CreateScope();
+        var scopedProvider = scope.ServiceProvider;
+        
+        notifier.Subscribe(scopedProvider.GetRequiredService<TransactionLogger>());
+        notifier.Subscribe(scopedProvider.GetRequiredService<TransactionUIUpdater>());
+        notifier.Subscribe(scopedProvider.GetRequiredService<TransactionReportGenerator>());
+    }
+
     private async Task<T> ExecuteInScopeEmployeeAsync<T>(Func<IEmployeeRepository, Task<T>> operation)
     {
         using var scope = serviceProvider.CreateScope();
@@ -32,7 +48,15 @@ public class PayrollManager(
             var employee = new Employee(Guid.NewGuid(), request.Name, request.Position, request.Salary);
 
             if (request == null) throw new ArgumentNullException(nameof(request));
-            return await repo.Add(employee);
+            try
+            {
+                return await repo.Add(employee);
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+            
         });
 
     public Task<Employee> DeleteEmployeeAsync(Guid employeeId) =>
@@ -105,7 +129,7 @@ public class PayrollManager(
             var deletedTransaction = await repo.Delete(transactionId);
 
             await notifier.NotifyAsync(transaction, ActionsConstants.Delete);
-            
+
             logger.Log(
                 $"{ActionsConstants.Delete} Transaction {transaction.Date:yyyy-MM-dd}: " +
                 $"{transaction.TypeId} - {transaction.Amount} USD, id: {transaction.Id}");

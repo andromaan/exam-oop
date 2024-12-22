@@ -11,13 +11,14 @@ namespace Application.Extensions;
 
 public static class DemonstrateWork
 {
-    public static async void SeedData(this IApplicationBuilder builder)
+    public static async Task SeedData(this IApplicationBuilder builder)
     {
         using (var scope = builder.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
         {
             PayrollManager payrollManager = scope.ServiceProvider.GetRequiredService<PayrollManager>();
             var employeeQuery = scope.ServiceProvider.GetRequiredService<IEmployeeQueries>();
-            var transactionQuery = scope.ServiceProvider.GetRequiredService<ITransactionQueries>();
+            
+            if (payrollManager == null) throw new Exception("PayrollManager is not registered.");
 
             if ((await employeeQuery.GetAll())?.Count() == 0)
             {

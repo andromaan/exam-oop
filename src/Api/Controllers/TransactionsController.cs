@@ -8,7 +8,7 @@ namespace Api.Controllers;
 
 [Route("transaction")]
 [ApiController]
-public class TransactionController(PayrollManager payrollManager, ITransactionQueries transactionQueries)
+public class TransactionsController(PayrollManager payrollManager, ITransactionQueries transactionQueries)
     : ControllerBase
 {
     [HttpPost("add")]

@@ -8,7 +8,7 @@ namespace Api.Controllers;
 
 [Route("employee")]
 [ApiController]
-public class EmployeeController(PayrollManager payrollManager, IEmployeeQueries employeeQueries) : ControllerBase
+public class EmployeesController(PayrollManager payrollManager, IEmployeeQueries employeeQueries) : ControllerBase
 {
     [HttpPost("add")]
     public async Task<ActionResult<EmployeeVM>> Add(

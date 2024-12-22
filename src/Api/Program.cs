@@ -1,3 +1,4 @@
+using Api.Modules;
 using Application.Extensions;
 using Application.Implementation.Middlewares;
 using Infrastructure;
@@ -12,19 +13,19 @@ builder.Services.AddControllers();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+await app.InitialiseDb();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    //await app.SeedData();
 }
 
 app.UseMiddleware<MiddlewareExceptionHandling>();
 
 app.MapControllers();
-
-app.SeedData();
 
 app.Run();
 
