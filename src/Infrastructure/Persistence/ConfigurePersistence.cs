@@ -46,7 +46,12 @@ public static class ConfigurePersistence
 
     private static void AddSingletons(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<PayrollManager>();
+        services.AddSingleton(provider =>
+        {
+            var notifier = provider.GetRequiredService<TransactionNotifier>();
+            var logger = provider.GetRequiredService<ILogger>();
+            return PayrollManager.GetInstance(provider, notifier, logger);
+        });
         services.AddSingleton<TransactionNotifier>();
         services.AddSingleton<ILogger>(_ => LoggerFactory.CreateLogger(configuration));
     }

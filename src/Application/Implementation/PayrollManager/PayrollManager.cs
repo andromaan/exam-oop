@@ -8,42 +8,53 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Implementation.PayrollManager;
 
-public class PayrollManager
+public sealed class PayrollManager
 {
-    private readonly IServiceProvider serviceProvider;
-    private readonly TransactionNotifier notifier;
-    private readonly ILogger logger;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly TransactionNotifier _notifier;
+    private readonly ILogger _logger;
 
-    public PayrollManager(IServiceProvider serviceProvider, TransactionNotifier notifier, ILogger logger)
+    private static volatile PayrollManager _instance;
+    private static readonly object _lock = new();
+
+    private PayrollManager(IServiceProvider serviceProvider, TransactionNotifier notifier, ILogger logger)
     {
-        this.serviceProvider = serviceProvider;
-        this.notifier = notifier;
-        this.logger = logger;
-        
+        _serviceProvider = serviceProvider;
+        _notifier = notifier;
+        _logger = logger;
+
         using var scope = serviceProvider.CreateScope();
         var scopedProvider = scope.ServiceProvider;
-        
-        notifier.Subscribe(scopedProvider.GetRequiredService<TransactionLogger>());
-        notifier.Subscribe(scopedProvider.GetRequiredService<TransactionUIUpdater>());
-        notifier.Subscribe(scopedProvider.GetRequiredService<TransactionReportGenerator>());
+
+        _notifier.Subscribe(scopedProvider.GetRequiredService<TransactionLogger>());
+        _notifier.Subscribe(scopedProvider.GetRequiredService<TransactionUIUpdater>());
+        _notifier.Subscribe(scopedProvider.GetRequiredService<TransactionReportGenerator>());
     }
 
-    private async Task<T> ExecuteInScopeEmployeeAsync<T>(Func<IEmployeeRepository, Task<T>> operation)
+    public static PayrollManager GetInstance(IServiceProvider serviceProvider, TransactionNotifier notifier, ILogger logger)
     {
-        using var scope = serviceProvider.CreateScope();
-        var employeeRepository = scope.ServiceProvider.GetRequiredService<IEmployeeRepository>();
-        return await operation(employeeRepository);
+        if (_instance == null)
+        {
+            lock (_lock)
+            {
+                if (_instance == null)
+                {
+                    _instance = new PayrollManager(serviceProvider, notifier, logger);
+                }
+            }
+        }
+        return _instance;
     }
-
-    private async Task<T> ExecuteInScopeTransactionAsync<T>(Func<ITransactionRepository, Task<T>> operation)
+    
+    private async Task<T> ExecuteInScopeAsync<T, TRepo>(Func<TRepo, Task<T>> operation) where TRepo : class
     {
-        using var scope = serviceProvider.CreateScope();
-        var employeeRepository = scope.ServiceProvider.GetRequiredService<ITransactionRepository>();
-        return await operation(employeeRepository);
+        using var scope = _serviceProvider.CreateScope();
+        var repository = scope.ServiceProvider.GetRequiredService<TRepo>();
+        return await operation(repository);
     }
 
     public Task<Employee> AddEmployeeAsync(EmployeeVM request) =>
-        ExecuteInScopeEmployeeAsync(async repo =>
+        ExecuteInScopeAsync<Employee, IEmployeeRepository>(async repo =>
         {
             var employee = new Employee(Guid.NewGuid(), request.Name, request.Position, request.Salary);
 
@@ -60,7 +71,7 @@ public class PayrollManager
         });
 
     public Task<Employee> DeleteEmployeeAsync(Guid employeeId) =>
-        ExecuteInScopeEmployeeAsync(async repo =>
+        ExecuteInScopeAsync<Employee, IEmployeeRepository>(async repo =>
         {
             var employee = await repo.Get(employeeId);
             if (employee == null)
@@ -72,11 +83,11 @@ public class PayrollManager
         });
 
     public Task<Transaction> CreateTransactionAsync(TransactionVM request) =>
-        ExecuteInScopeTransactionAsync(async repo =>
+        ExecuteInScopeAsync<Transaction, ITransactionRepository>(async repo =>
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
 
-            var employee = await ExecuteInScopeEmployeeAsync(repository
+            var employee = await ExecuteInScopeAsync<Employee, IEmployeeRepository>(repository
                 => repository.Get(request.EmployeeId));
 
             if (employee == null)
@@ -86,9 +97,9 @@ public class PayrollManager
 
             var transaction = new Transaction(Guid.NewGuid(), employee.Id, request.Amount, request.Type);
 
-            await notifier.NotifyAsync(transaction, ActionsConstants.Add);
+            await _notifier.NotifyAsync(transaction, ActionsConstants.Add);
 
-            logger.Log(
+            _logger.Log(
                 $"{ActionsConstants.Add} Transaction {transaction.Date}:" +
                 $" {transaction.TypeId} - {transaction.Amount} USD, id: {transaction.Id}");
 
@@ -96,9 +107,9 @@ public class PayrollManager
         });
 
     public Task<IReadOnlyList<Transaction>> GetTransactionsByEmployeeAsync(Guid employeeId) =>
-        ExecuteInScopeTransactionAsync(async repo =>
+        ExecuteInScopeAsync<IReadOnlyList<Transaction>, ITransactionRepository>(async repo =>
         {
-            var employee = await ExecuteInScopeEmployeeAsync(repository
+            var employee = await ExecuteInScopeAsync<Employee, IEmployeeRepository>(repository
                 => repository.Get(employeeId));
 
             if (employee == null)
@@ -110,7 +121,7 @@ public class PayrollManager
         });
 
     public Task<decimal> GetTotalPayoutsAsync(DateTime startDate, DateTime endDate) =>
-        ExecuteInScopeTransactionAsync(async repo =>
+        ExecuteInScopeAsync<decimal, ITransactionRepository>(async repo =>
         {
             if (startDate > endDate || startDate == endDate || endDate > DateTime.UtcNow)
             {
@@ -125,7 +136,7 @@ public class PayrollManager
         });
 
     public Task<Transaction> DeleteTransactionAsync(Guid transactionId) =>
-        ExecuteInScopeTransactionAsync(async repo =>
+        ExecuteInScopeAsync<Transaction, ITransactionRepository>(async repo =>
         {
             var transaction = await repo.Get(transactionId);
             if (transaction == null)
@@ -135,12 +146,21 @@ public class PayrollManager
 
             var deletedTransaction = await repo.Delete(transactionId);
 
-            await notifier.NotifyAsync(transaction, ActionsConstants.Delete);
+            await _notifier.NotifyAsync(transaction, ActionsConstants.Delete);
 
-            logger.Log(
+            _logger.Log(
                 $"{ActionsConstants.Delete} Transaction {transaction.Date}: " +
                 $"{transaction.TypeId} - {transaction.Amount} USD, id: {transaction.Id}");
 
             return deletedTransaction;
         });
+    
+    public static void ResetInstance()
+    {
+        lock (_lock)
+        {
+            _instance = null;
+        }
+    }
+
 }

@@ -78,10 +78,11 @@ public static class DemonstrateWork
                     })
                 };
 
-
-                var randomEmployee = employees
-                    .Where(x=> transactions.Any(y=>y.EmployeeId == x.Id))
-                    .ToList()[random.Next(employees.Count())];
+                var employeesWithTransactions = employees
+                    .Where(x => transactions.Any(y => y.EmployeeId == x.Id))
+                    .ToList();
+                
+                var randomEmployee = employeesWithTransactions[random.Next(employeesWithTransactions.Count())];
                 
                 var transactionForEmployee = await payrollManager.GetTransactionsByEmployeeAsync(randomEmployee.Id);
 
