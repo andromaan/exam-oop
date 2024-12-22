@@ -15,7 +15,7 @@ public class Transaction
         Id = id;
         EmployeeId = employeeId;
         Amount = amount;
-        Date = DateTime.Now;
+        Date = DateTime.UtcNow;
         TypeId = typeId;
     }
 }

@@ -21,7 +21,7 @@ public class FileLogger : ILogger
     {
         using (var writer = new StreamWriter(_filePath, append: true))
         {
-            writer.WriteLine($"[File Logger] {DateTime.Now}: {message}");
+            writer.WriteLine($"[File Logger] {DateTime.UtcNow}: {message}");
         }
     }
 
@@ -29,7 +29,7 @@ public class FileLogger : ILogger
     {
         using (var writer = new StreamWriter(_filePath, append: true))
         {
-            writer.WriteLine($"[File Logger] {DateTime.Now}: ERROR - {message}");
+            writer.WriteLine($"[File Logger] {DateTime.UtcNow}: ERROR - {message}");
             writer.WriteLine($"Exception: {exception.GetType().Name} - {exception.Message}");
             writer.WriteLine($"StackTrace: {exception.StackTrace}");
         }

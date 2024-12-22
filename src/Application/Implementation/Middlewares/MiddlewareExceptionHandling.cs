@@ -33,6 +33,7 @@ public class MiddlewareExceptionHandling(RequestDelegate next, ILogger logger)
                 or TransactionNotFoundException => (int)HttpStatusCode.NotFound,
             UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
             InvalidOperationException 
+                or DatePeriodInvalidException
                 or ArgumentException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError
         };

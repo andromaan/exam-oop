@@ -112,6 +112,11 @@ public class PayrollManager
     public Task<decimal> GetTotalPayoutsAsync(DateTime startDate, DateTime endDate) =>
         ExecuteInScopeTransactionAsync(async repo =>
         {
+            if (startDate > endDate || startDate == endDate || endDate > DateTime.UtcNow)
+            {
+                throw new DatePeriodInvalidException(startDate, endDate);
+            }
+            
             var transactions = await repo.GetAll();
 
             return transactions

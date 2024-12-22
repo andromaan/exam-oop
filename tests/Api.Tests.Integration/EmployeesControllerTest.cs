@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using Application.Abstraction.ViewModels;
 using Domain.Models;
 using FluentAssertions;
@@ -78,6 +79,20 @@ public class EmployeesControllerTest(IntegrationTestWebFactory factory)
         
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
+    }
+    
+    [Fact]
+    public async Task ShouldNotDeleteEmployeeBecauseEmployeeIsNotFound()
+    {
+        // Arrange
+        var randomEmployeeId = Guid.NewGuid();
+
+        // Act
+        var response = await Client.DeleteAsync($"employees/delete/{randomEmployeeId}");
+        
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
     
     public async Task InitializeAsync()
