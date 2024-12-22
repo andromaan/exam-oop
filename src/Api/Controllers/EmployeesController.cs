@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-[Route("employee")]
+[Route("employees")]
 [ApiController]
 public class EmployeesController(PayrollManager payrollManager, IEmployeeQueries employeeQueries) : ControllerBase
 {

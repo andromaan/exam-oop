@@ -7,7 +7,6 @@ namespace Application.Implementation.Middlewares;
 
 public class MiddlewareExceptionHandling(RequestDelegate next, ILogger logger)
 {
-
     public async Task Invoke(HttpContext context)
     {
         try
@@ -29,9 +28,12 @@ public class MiddlewareExceptionHandling(RequestDelegate next, ILogger logger)
 
         var statusCode = exception switch
         {
-            FileNotFoundException => (int)HttpStatusCode.NotFound,
+            FileNotFoundException 
+                or EmployeeNotFoundException
+                or TransactionNotFoundException => (int)HttpStatusCode.NotFound,
             UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
-            InvalidOperationException => (int)HttpStatusCode.BadRequest,
+            InvalidOperationException 
+                or ArgumentException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError
         };
 

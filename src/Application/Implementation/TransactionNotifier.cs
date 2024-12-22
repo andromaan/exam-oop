@@ -23,7 +23,14 @@ public class TransactionNotifier
     {
         foreach (var observer in _observers)
         {
-            await observer.UpdateAsync(transaction, action);
+            try
+            {
+                await observer.UpdateAsync(transaction, action);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }

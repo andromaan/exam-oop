@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-[Route("transaction")]
+[Route("transactions")]
 [ApiController]
 public class TransactionsController(PayrollManager payrollManager, ITransactionQueries transactionQueries)
     : ControllerBase

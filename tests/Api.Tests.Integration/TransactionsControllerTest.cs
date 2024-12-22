@@ -1,4 +1,6 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
+using Api.DTOs;
 using Application.Abstraction.ViewModels;
 using Domain.Constants;
 using Domain.Models;
@@ -41,7 +43,6 @@ public class TransactionsControllerTest
         Assert.Equal(typeId, transaction.TypeId);
         Assert.Equal(DateTime.Now.Date, transaction.Date.Date);
     }
-
     
     [Fact]
     public async Task ShouldCreateTransaction()
@@ -57,7 +58,7 @@ public class TransactionsControllerTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("transaction/add", request);
+        var response = await Client.PostAsJsonAsync("transactions/add", request);
         
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
@@ -74,7 +75,69 @@ public class TransactionsControllerTest
         facultyFromDataBase!.EmployeeId.Should().Be(_mainEmployee.Id);
         facultyFromDataBase!.TypeId.Should().Be(transactionType);
     }
+    
+    [Fact]
+    public async Task ShouldShowAllTransaction()
+    {
+        // Arrange & Act
+        var response = await Client.GetAsync($"transactions/get-all");
+        
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+        
+        var transactionsFromResponse = await response.ToResponseModel<IReadOnlyList<TransactionDTO>>();
 
+        transactionsFromResponse.Should().NotBeEmpty();
+    }
+    
+    [Fact]
+    public async Task ShouldShowAllTransactionByEmployee()
+    {
+        // Arrange & Act
+        var response = await Client.GetAsync($"transactions/get-all-by-employee/{_mainEmployee.Id}");
+        
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+        
+        var transactionsFromResponse = await response.ToResponseModel<IReadOnlyList<TransactionDTO>>();
+
+        transactionsFromResponse.Should().NotBeEmpty();
+    }
+    
+    [Fact]
+    public async Task ShouldDeleteTransaction()
+    {
+        // Arrange
+        var transactionIdToDelete = _mainTransaction.Id;
+
+        // Act
+        var response = await Client.DeleteAsync($"transactions/delete/{transactionIdToDelete}");
+        
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+    
+    [Fact]
+    public async Task ShouldNotCreateTransactionBecauseEmployeeIsNotFound()
+    {
+        // Arrange
+        var transactionAmount = 5000;
+        var transactionType = TypesForTransaction.Salary;
+        var request = new TransactionVM
+        {
+            EmployeeId = Guid.NewGuid(),
+            Amount = transactionAmount,
+            Type = transactionType
+        };
+
+        // Act
+        var response = await Client.PostAsJsonAsync("transactions/add", request);
+        
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+    
     public async Task InitializeAsync()
     {
         await Context.Employees.AddAsync(_mainEmployee);

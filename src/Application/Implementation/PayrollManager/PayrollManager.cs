@@ -65,7 +65,7 @@ public class PayrollManager
             var employee = await repo.Get(employeeId);
             if (employee == null)
             {
-                throw new InvalidOperationException($"Employee with ID {employeeId} not found.");
+                throw new EmployeeNotFoundException(employeeId);
             }
 
             return await repo.Delete(employeeId);
@@ -81,7 +81,7 @@ public class PayrollManager
 
             if (employee == null)
             {
-                throw new InvalidOperationException($"Employee with {request.EmployeeId} not found.");
+                throw new EmployeeNotFoundException(request.EmployeeId);
             }
 
             var transaction = new Transaction(Guid.NewGuid(), employee.Id, request.Amount, request.Type);
@@ -103,7 +103,7 @@ public class PayrollManager
 
             if (employee == null)
             {
-                throw new InvalidOperationException($"Employee with {employeeId} not found.");
+                throw new EmployeeNotFoundException(employeeId);
             }
 
             return await repo.GetAllForEmployee(employeeId);
@@ -124,7 +124,9 @@ public class PayrollManager
         {
             var transaction = await repo.Get(transactionId);
             if (transaction == null)
-                throw new InvalidOperationException($"Transaction with ID {transactionId} not found.");
+            {
+                throw new TransactionNotFoundException(transactionId);
+            }
 
             var deletedTransaction = await repo.Delete(transactionId);
 

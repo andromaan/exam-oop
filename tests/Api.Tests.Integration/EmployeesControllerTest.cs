@@ -50,7 +50,7 @@ public class EmployeesControllerTest(IntegrationTestWebFactory factory)
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("employee/add", request);
+        var response = await Client.PostAsJsonAsync("employees/add", request);
 
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
@@ -67,6 +67,19 @@ public class EmployeesControllerTest(IntegrationTestWebFactory factory)
         employeeFromDataBase!.Salary.Should().Be(employeeSalary);
     }
 
+    [Fact]
+    public async Task ShouldDeleteEmployee()
+    {
+        // Arrange
+        var mainEmployeeId = _mainEmployee.Id;
+
+        // Act
+        var response = await Client.DeleteAsync($"employees/delete/{mainEmployeeId}");
+        
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+    
     public async Task InitializeAsync()
     {
         await Context.Employees.AddAsync(_mainEmployee);
