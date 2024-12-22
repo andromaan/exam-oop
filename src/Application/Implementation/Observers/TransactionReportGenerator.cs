@@ -1,5 +1,6 @@
 ﻿using Application.Abstraction.Interfaces;
 using Application.Abstraction.Interfaces.Queries;
+using Domain.Constants;
 using Domain.Models;
 
 namespace Application.Implementation.Observers;
@@ -11,11 +12,11 @@ public class TransactionReportGenerator(ITransactionQueries transactionQueries) 
 
     public Task UpdateAsync(Transaction transaction, string action)
     {
-        if (action == "add")
+        if (action == ActionsConstants.Add)
         {
             _transactions.Add(transaction);
         }
-        else if (action == "delete")
+        else if (action == ActionsConstants.Delete)
         {
             _transactions.RemoveAll(tr => tr.Id == transaction.Id);
         }
@@ -27,7 +28,7 @@ public class TransactionReportGenerator(ITransactionQueries transactionQueries) 
     private void GenerateReport()
     {
         var report = string.Join(Environment.NewLine, _transactions.Select(t =>
-            $"{t.Date:yyyy-MM-dd}: {t.TypeId} - {t.Amount} USD"));
+            $"{t.Date}: {t.TypeId} - {t.Amount} USD"));
 
         File.WriteAllText("TransactionReport.txt", report);
         Console.WriteLine("Transaction report updated.");

@@ -1,7 +1,9 @@
+using Application.Abstraction.Interfaces;
 using Application.Abstraction.Interfaces.Queries;
 using Application.Abstraction.Interfaces.Repositories;
 using Application.Implementation;
 using Application.Implementation.Observers;
+using Infrastructure.Factiories;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -31,6 +33,8 @@ public static class ConfigurePersistence
         services.AddObservers();
         services.AddRepositories();
         services.AddSingletons();
+
+        services.AddSingleton<ILogger>(provider => LoggerFactory.CreateLogger(configuration));
     }
 
     private static void AddObservers(this IServiceCollection services)
@@ -46,8 +50,9 @@ public static class ConfigurePersistence
         {
             var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
             var notifier = provider.GetRequiredService<TransactionNotifier>();
+            var logger = provider.GetRequiredService<ILogger>();
 
-            var payrollManager = new PayrollManager(provider, notifier);
+            var payrollManager = new PayrollManager(provider, notifier,logger);
 
             using var scope = scopeFactory.CreateScope();
             var scopedProvider = scope.ServiceProvider;
@@ -59,7 +64,7 @@ public static class ConfigurePersistence
             return payrollManager;
         });
 
-        
+
         services.AddSingleton<TransactionNotifier>();
     }
 
@@ -68,7 +73,7 @@ public static class ConfigurePersistence
         services.AddScoped<EmployeeRepository>();
         services.AddScoped<IEmployeeRepository>(provider => provider.GetRequiredService<EmployeeRepository>());
         services.AddScoped<IEmployeeQueries>(provider => provider.GetRequiredService<EmployeeRepository>());
-        
+
         services.AddScoped<TransactionRepository>();
         services.AddScoped<ITransactionRepository>(provider => provider.GetRequiredService<TransactionRepository>());
         services.AddScoped<ITransactionQueries>(provider => provider.GetRequiredService<TransactionRepository>());

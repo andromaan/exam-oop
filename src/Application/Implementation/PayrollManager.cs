@@ -1,12 +1,16 @@
 ﻿using Application.Abstraction.Interfaces;
 using Application.Abstraction.Interfaces.Repositories;
 using Application.Abstraction.ViewModels;
+using Domain.Constants;
 using Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Implementation;
 
-public class PayrollManager(IServiceProvider serviceProvider, TransactionNotifier notifier)
+public class PayrollManager(
+    IServiceProvider serviceProvider,
+    TransactionNotifier notifier,
+    ILogger logger)
 {
     private async Task<T> ExecuteInScopeEmployeeAsync<T>(Func<IEmployeeRepository, Task<T>> operation)
     {
@@ -25,7 +29,7 @@ public class PayrollManager(IServiceProvider serviceProvider, TransactionNotifie
     public Task<Employee> AddEmployeeAsync(EmployeeVM request) =>
         ExecuteInScopeEmployeeAsync(async repo =>
         {
-            var employee = new Employee(new Guid(), request.Name, request.Position, request.Salary);
+            var employee = new Employee(Guid.NewGuid(), request.Name, request.Position, request.Salary);
 
             if (request == null) throw new ArgumentNullException(nameof(request));
             return await repo.Add(employee);
@@ -48,7 +52,7 @@ public class PayrollManager(IServiceProvider serviceProvider, TransactionNotifie
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
 
-            var employee = await ExecuteInScopeEmployeeAsync( repository 
+            var employee = await ExecuteInScopeEmployeeAsync(repository
                 => repository.Get(request.EmployeeId));
 
             if (employee == null)
@@ -56,19 +60,23 @@ public class PayrollManager(IServiceProvider serviceProvider, TransactionNotifie
                 throw new InvalidOperationException($"Employee with {request.EmployeeId} not found.");
             }
 
-            var transaction = new Transaction(new Guid(), employee.Id, request.Amount, request.Type);
-            
-            await notifier.NotifyAsync(transaction, "add");
-            
+            var transaction = new Transaction(Guid.NewGuid(), employee.Id, request.Amount, request.Type);
+
+            await notifier.NotifyAsync(transaction, ActionsConstants.Add);
+
+            logger.Log(
+                $"{ActionsConstants.Add} Transaction {transaction.Date}:" +
+                $" {transaction.TypeId} - {transaction.Amount} USD, id: {transaction.Id}");
+
             return await repo.Add(transaction);
         });
 
     public Task<IReadOnlyList<Transaction>> GetTransactionsByEmployeeAsync(Guid employeeId) =>
         ExecuteInScopeTransactionAsync(async repo =>
         {
-            var employee = await ExecuteInScopeEmployeeAsync( repository 
+            var employee = await ExecuteInScopeEmployeeAsync(repository
                 => repository.Get(employeeId));
-            
+
             if (employee == null)
             {
                 throw new InvalidOperationException($"Employee with {employeeId} not found.");
@@ -86,7 +94,7 @@ public class PayrollManager(IServiceProvider serviceProvider, TransactionNotifie
                 .Where(t => t.Date >= startDate && t.Date <= endDate)
                 .Sum(t => t.Amount);
         });
-    
+
     public Task<Transaction> DeleteTransactionAsync(Guid transactionId) =>
         ExecuteInScopeTransactionAsync(async repo =>
         {
@@ -96,7 +104,11 @@ public class PayrollManager(IServiceProvider serviceProvider, TransactionNotifie
 
             var deletedTransaction = await repo.Delete(transactionId);
 
-            await notifier.NotifyAsync(transaction, "delete");
+            await notifier.NotifyAsync(transaction, ActionsConstants.Delete);
+            
+            logger.Log(
+                $"{ActionsConstants.Delete} Transaction {transaction.Date:yyyy-MM-dd}: " +
+                $"{transaction.TypeId} - {transaction.Amount} USD, id: {transaction.Id}");
 
             return deletedTransaction;
         });
