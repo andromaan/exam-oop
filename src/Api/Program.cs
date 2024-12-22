@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+
 var app = builder.Build();
 await app.InitialiseDb();
 
@@ -20,7 +21,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    //await app.SeedData();
+    await app.WorkDemo();
 }
 
 app.UseMiddleware<MiddlewareExceptionHandling>();

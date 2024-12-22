@@ -24,15 +24,16 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureTestServices(services =>
-        {
-            RegisterDatabase(services);
-        }).ConfigureAppConfiguration((_, config) =>
-        {
-            config
-                .AddJsonFile("appsettings.Test.json")
-                .AddEnvironmentVariables();
-        });
+        builder.ConfigureTestServices(services 
+            => { RegisterDatabase(services); }).ConfigureAppConfiguration(
+            (_, config) =>
+            {
+                config
+                    .AddJsonFile("appsettings.Test.json")
+                    .AddEnvironmentVariables();
+            });
+        
+        builder.UseEnvironment("Test");
     }
 
     private void RegisterDatabase(IServiceCollection services)
@@ -47,9 +48,11 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
             options => options
                 .UseNpgsql(
                     dataSource,
-                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName))
+                    b 
+                        => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName))
                 .UseSnakeCaseNamingConvention()
-                .ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning)));
+                .ConfigureWarnings(w 
+                    => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning)));
     }
 
     public Task InitializeAsync()

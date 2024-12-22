@@ -22,6 +22,28 @@ public class TransactionsControllerTest
     }
     
     [Fact]
+    public async Task ShouldCreateTransactionClass()
+    {
+        // Arrange
+        var transactionId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        var amount = 1000.50m;
+        var typeId = "Bonus";
+
+        // Act
+        var transaction = new Transaction(transactionId, employeeId, amount, typeId);
+
+        // Assert
+        Assert.NotNull(transaction);
+        Assert.Equal(transactionId, transaction.Id);
+        Assert.Equal(employeeId, transaction.EmployeeId);
+        Assert.Equal(amount, transaction.Amount);
+        Assert.Equal(typeId, transaction.TypeId);
+        Assert.Equal(DateTime.Now.Date, transaction.Date.Date);
+    }
+
+    
+    [Fact]
     public async Task ShouldCreateTransaction()
     {
         // Arrange

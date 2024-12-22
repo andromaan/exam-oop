@@ -17,7 +17,7 @@ public class TransactionsController(PayrollManager payrollManager, ITransactionQ
     {
         var response = await payrollManager.CreateTransactionAsync(request);
 
-        return Ok(response);
+        return Ok(TransactionDTO.FromDomainModel(response));
     }
 
     [HttpGet("get-all-by-employee/{employeeId:guid}")]
@@ -52,6 +52,6 @@ public class TransactionsController(PayrollManager payrollManager, ITransactionQ
     {
         var response = await payrollManager.DeleteTransactionAsync(transactionId);
 
-        return Ok(response);
+        return Ok(TransactionDTO.FromDomainModel(response));
     }
 }

@@ -131,7 +131,7 @@ public class PayrollManager
             await notifier.NotifyAsync(transaction, ActionsConstants.Delete);
 
             logger.Log(
-                $"{ActionsConstants.Delete} Transaction {transaction.Date:yyyy-MM-dd}: " +
+                $"{ActionsConstants.Delete} Transaction {transaction.Date}: " +
                 $"{transaction.TypeId} - {transaction.Amount} USD, id: {transaction.Id}");
 
             return deletedTransaction;

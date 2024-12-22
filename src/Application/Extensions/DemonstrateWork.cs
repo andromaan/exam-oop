@@ -11,7 +11,7 @@ namespace Application.Extensions;
 
 public static class DemonstrateWork
 {
-    public static async Task SeedData(this IApplicationBuilder builder)
+    public static async Task WorkDemo(this IApplicationBuilder builder)
     {
         using (var scope = builder.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
         {
@@ -80,13 +80,16 @@ public static class DemonstrateWork
                 };
 
 
-                var randomEmployee = employees[random.Next(employees.Count())];
+                var randomEmployee = employees
+                    .Where(x=> transactions.Any(y=>y.EmployeeId == x.Id))
+                    .ToList()[random.Next(employees.Count())];
+                
                 var transactionForEmployee = await payrollManager.GetTransactionsByEmployeeAsync(randomEmployee.Id);
 
                 Console.WriteLine($"All transaction for user: {randomEmployee.Name}");
                 foreach (var transaction in transactionForEmployee)
                 {
-                    Console.WriteLine($"{transaction.Date:yyyy-MM-dd}: {transaction.TypeId} - {transaction.Amount} USD");
+                    Console.WriteLine($"{transaction.Date}: {transaction.TypeId} - {transaction.Amount} USD");
                 }
 
                 await payrollManager.DeleteTransactionAsync(transactions[random.Next(transactions.Count())].Id);

@@ -11,12 +11,12 @@ namespace Api.Controllers;
 public class EmployeesController(PayrollManager payrollManager, IEmployeeQueries employeeQueries) : ControllerBase
 {
     [HttpPost("add")]
-    public async Task<ActionResult<EmployeeVM>> Add(
+    public async Task<ActionResult<EmployeeDTO>> Add(
         [FromBody] EmployeeVM request)
     {
         var respond = await payrollManager.AddEmployeeAsync(request);
 
-        return Ok(respond);
+        return Ok(EmployeeDTO.FromDomainModel(respond));
     }
     
     [HttpDelete("delete/{employeeId:guid}")]
@@ -25,7 +25,7 @@ public class EmployeesController(PayrollManager payrollManager, IEmployeeQueries
     {
         var respond = await payrollManager.DeleteEmployeeAsync(employeeId);
 
-        return Ok(respond);
+        return Ok(EmployeeDTO.FromDomainModel(respond));
     }
     
     [HttpGet("get-all")]
